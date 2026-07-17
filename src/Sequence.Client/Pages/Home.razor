@@ -1,0 +1,86 @@
+@page "/"
+@using Sequence.Client.Services
+@inject GameClient Client
+@inject NavigationManager Nav
+
+<PageTitle>Sequence</PageTitle>
+
+<div class="lobby">
+    <h1>Sequence</h1>
+
+    <div class="lobby-field">
+        <label>Your name</label>
+        <input @bind="playerName" @bind:event="oninput" placeholder="Enter your name" />
+    </div>
+
+    <div class="lobby-actions">
+        <button class="btn-primary" @onclick="CreateRoom" disabled="@(!CanSubmit || busy)">
+            Create Room
+        </button>
+
+        <div class="join-row">
+            <input @bind="roomCode" @bind:event="oninput" placeholder="Room code" maxlength="5" />
+            <button @onclick="JoinRoom" disabled="@(!CanSubmit || string.IsNullOrWhiteSpace(roomCode) || busy)">
+                Join Room
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <p class="error">@error</p>
+    }
+</div>
+
+@code {
+    private string playerName = "";
+    private string roomCode = "";
+    private string? error;
+    private bool busy;
+
+    private bool CanSubmit => !string.IsNullOrWhiteSpace(playerName);
+
+    private async Task CreateRoom()
+    {
+        busy = true;
+        error = null;
+        try
+        {
+            var result = await Client.CreateRoomAsync(playerName.Trim());
+            if (result.Success)
+                Nav.NavigateTo($"/game/{result.RoomCode}");
+            else
+                error = result.Error;
+        }
+        catch (Exception ex)
+        {
+            error = $"Could not reach the game server: {ex.Message}";
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task JoinRoom()
+    {
+        busy = true;
+        error = null;
+        try
+        {
+            var result = await Client.JoinRoomAsync(roomCode.Trim(), playerName.Trim());
+            if (result.Success)
+                Nav.NavigateTo($"/game/{result.RoomCode}");
+            else
+                error = result.Error;
+        }
+        catch (Exception ex)
+        {
+            error = $"Could not reach the game server: {ex.Message}";
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
