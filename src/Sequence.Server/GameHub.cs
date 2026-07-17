@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Sequence.Core.Contracts;
 using Sequence.Core.Game;
+using Sequence.Core.Cards;
 
 namespace Sequence.Server;
 
@@ -88,6 +89,28 @@ public sealed class GameHub : Hub
 
         await BroadcastState(state);
     }
+
+    public async Task SelectCard(string roomCode, Card card)
+    {
+        if(!_rooms.TryGetRoom(roomCode, out var state)) return;
+        if(!_rooms.TryGetConnection(Context.ConnectionId, out var conn)) return;
+
+        if (state.Status != GameStatus.InProgress || state.CurrentPlayer.Id != conn.PlayerId)
+        return;
+
+        var player = state.GetPlayer(conn.PlayerId);
+        if (player is null || !player.Hand.Contains(card)) return;
+
+        var targets = MoveCandidateFinder.FindTargets(state, conn.PlayerId, card);
+        var labeled = targets.Select((cell, i) => new LabeledTarget(LabelFor(i), cell.Row, cell.Col)).ToList();
+
+        var selection = new CardSelection(conn.PlayerId, card, labeled);
+        await Clients.Group(roomCode).SendAsync("CardSelected", selection);
+    }
+
+    private static string LabelFor(int index) =>
+    index < 26 ? ((char)('A'+index)).ToString() : (index + 1).ToString();
+    
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {

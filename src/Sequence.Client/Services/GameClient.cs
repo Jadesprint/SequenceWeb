@@ -1,4 +1,6 @@
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.SignalR.Client;
+using Sequence.Core.Cards;
 using Sequence.Core.Contracts;
 
 namespace Sequence.Client.Services;
@@ -13,6 +15,7 @@ public sealed class GameClient : IAsyncDisposable
     public GameStateSnapshot? State { get; private set; }
     public Guid? PlayerId { get; private set; }
     public string? LastError { get; private set; }
+    public CardSelection? LatestSelection {get; private set;}
 
     public event Action? OnChange;
 
@@ -36,6 +39,12 @@ public sealed class GameClient : IAsyncDisposable
         _connection.On<string>("Error", message =>
         {
             LastError = message;
+            OnChange?.Invoke();
+        });
+
+        _connection.On<CardSelection>("CardSelected", selection =>
+        {
+            LatestSelection = selection;
             OnChange?.Invoke();
         });
 
@@ -70,6 +79,12 @@ public sealed class GameClient : IAsyncDisposable
     {
         await EnsureConnectedAsync();
         await _connection!.InvokeAsync("PlayMove", roomCode, move);
+    }
+
+    public async Task SelectcardAsync(string roomCode, Card card)
+    {
+        await EnsureConnectedAsync();
+        await _connection!.InvokeAsync("SelectCard", roomCode, card);
     }
 
     public async ValueTask DisposeAsync()
