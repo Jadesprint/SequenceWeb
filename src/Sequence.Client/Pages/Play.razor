@@ -1,0 +1,199 @@
+@page "/play/{RoomCode}"
+@using Sequence.Core.Cards
+@using Sequence.Core.Contracts
+@using Sequence.Core.Game
+@using Sequence.Client.Services
+@inject GameClient Client
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Sequence — @RoomCode</PageTitle>
+
+@if (State is null)
+{
+    <p class="status-line">Connecting…</p>
+}
+else
+{
+    <div class="game-shell">
+        <header class="game-header">
+            <div>
+                <strong>Room:</strong> @State.RoomCode
+            </div>
+            <ul class="player-list">
+                @foreach (var p in State.Players)
+                {
+                    <li class="@ColorClass(p.Color) @(p.Id == State.CurrentPlayerId ? "current-turn" : "")">
+                        @p.Name — @p.SequenceCount / @State.SequencesToWin sequences
+                        @if (p.Id == MyPlayerId) { <span> (you)</span> }
+                    </li>
+                }
+            </ul>
+        </header>
+
+        @if (!string.IsNullOrEmpty(Client.LastError))
+        {
+            <p class="error">@Client.LastError</p>
+        }
+
+        @if (State.Status == GameStatus.WaitingForPlayers)
+        {
+            <div class="waiting-panel">
+                <p>Waiting for players. Share the room code <strong>@State.RoomCode</strong> with others.</p>
+                @if (State.Players.Count >= 2)
+                {
+                    <button class="btn-primary" @onclick="StartGame">Start Game</button>
+                }
+                else
+                {
+                    <p>Need at least 2 players to start.</p>
+                }
+            </div>
+        }
+        else if (State.Status == GameStatus.Completed)
+        {
+            <div class="winner-banner">
+                🏆 @WinnerName() wins!
+            </div>
+        }
+        else if (State.CurrentPlayerId != MyPlayerId)
+        {
+            <p class="status-line">Waiting for @CurrentPlayerName()…</p>
+        }
+        else if (pendingCard is null)
+        {
+            <p class="status-line">Your turn — pick a card</p>
+            <div class="hand">
+                @foreach (var card in State.YourHand)
+                {
+                    <button class="card @SuitClass(card.Suit)"
+                            disabled="@card.IsJack"
+                            title="@(card.IsJack ? "Jacks aren't supported yet" : "")"
+                            @onclick="() => PickCard(card)">
+                        @DescribeCard(card)
+                    </button>
+                }
+            </div>
+        }
+        else if (MySelection is null)
+        {
+            <p class="status-line">Finding legal spaces for @DescribeCard(pendingCard.Value)…</p>
+        }
+        else if (MySelection.Targets.Count == 0)
+        {
+            <p class="status-line">No open spaces for @DescribeCard(pendingCard.Value) — pick another card.</p>
+            <button @onclick="CancelSelection">Back</button>
+        }
+        else
+        {
+            <p class="status-line">Playing @DescribeCard(pendingCard.Value) — choose a space:</p>
+            <div class="targets">
+                @foreach (var target in MySelection.Targets)
+                {
+                    <button class="target-btn" @onclick="() => PlayTarget(target)">@target.Label</button>
+                }
+            </div>
+            <button @onclick="CancelSelection">Back</button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string RoomCode { get; set; } = "";
+
+    private Card? pendingCard;
+
+    private GameStateSnapshot? State => Client.State;
+    private Guid? MyPlayerId => Client.PlayerId;
+
+    private CardSelection? MySelection =>
+        Client.LatestSelection is { } sel
+        && pendingCard is not null
+        && sel.PlayerId == MyPlayerId
+        && sel.Card == pendingCard.Value
+            ? sel
+            : null;
+
+    protected override void OnInitialized()
+    {
+        Client.OnChange += HandleChange;
+
+        if (Client.PlayerId is null)
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+
+    private async Task StartGame() => await Client.StartGameAsync(RoomCode);
+
+    private async Task PickCard(Card card)
+    {
+        pendingCard = card;
+        await Client.SelectcardAsync(RoomCode, card);
+    }
+
+    private void CancelSelection()
+    {
+        pendingCard = null;
+    }
+
+    private async Task PlayTarget(LabeledTarget target)
+    {
+        if (pendingCard is null) return;
+
+        var move = new MoveRequest(pendingCard.Value, target.Row, target.Col, MoveType.PlaceChip);
+        pendingCard = null;
+        await Client.PlayMoveAsync(RoomCode, move);
+    }
+
+    private string CurrentPlayerName() =>
+        State?.Players.FirstOrDefault(p => p.Id == State.CurrentPlayerId)?.Name ?? "";
+
+    private string WinnerName() =>
+        State?.Players.FirstOrDefault(p => p.Id == State.WinnerId)?.Name ?? "";
+
+    private static string ColorClass(PlayerColor color) => color switch
+    {
+        PlayerColor.Blue => "color-blue",
+        PlayerColor.Green => "color-green",
+        PlayerColor.Red => "color-red",
+        _ => ""
+    };
+
+    private static string SuitClass(Suit suit) =>
+        suit is Suit.Hearts or Suit.Diamonds ? "suit-red" : "suit-black";
+
+    private static string DescribeCard(Card card)
+    {
+        var rank = card.Rank switch
+        {
+            Rank.Two => "2",
+            Rank.Three => "3",
+            Rank.Four => "4",
+            Rank.Five => "5",
+            Rank.Six => "6",
+            Rank.Seven => "7",
+            Rank.Eight => "8",
+            Rank.Nine => "9",
+            Rank.Ten => "10",
+            Rank.Jack => "J",
+            Rank.Queen => "Q",
+            Rank.King => "K",
+            Rank.Ace => "A",
+            _ => "?"
+        };
+        var suit = card.Suit switch
+        {
+            Suit.Clubs => "♣",
+            Suit.Diamonds => "♦",
+            Suit.Hearts => "♥",
+            Suit.Spades => "♠",
+            _ => "?"
+        };
+        return $"{rank}{suit}";
+    }
+
+    public void Dispose() => Client.OnChange -= HandleChange;
+}

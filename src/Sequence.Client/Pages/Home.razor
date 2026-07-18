@@ -48,7 +48,7 @@
         {
             var result = await Client.CreateRoomAsync(playerName.Trim());
             if (result.Success)
-                Nav.NavigateTo($"/game/{result.RoomCode}");
+                Nav.NavigateTo($"/play/{result.RoomCode}");
             else
                 error = result.Error;
         }
@@ -70,7 +70,7 @@
         {
             var result = await Client.JoinRoomAsync(roomCode.Trim(), playerName.Trim());
             if (result.Success)
-                Nav.NavigateTo($"/game/{result.RoomCode}");
+                Nav.NavigateTo($"/play/{result.RoomCode}");
             else
                 error = result.Error;
         }

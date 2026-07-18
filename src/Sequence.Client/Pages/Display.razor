@@ -1,10 +1,9 @@
-@page "/game/{RoomCode}"
+@page "/display/{RoomCode}"
 @using Sequence.Core.Cards
 @using Sequence.Core.Contracts
 @using Sequence.Core.Game
 @using Sequence.Client.Services
 @inject GameClient Client
-@inject NavigationManager Nav
 @implements IDisposable
 
 <PageTitle>Sequence — @RoomCode</PageTitle>
@@ -25,30 +24,17 @@ else
                 {
                     <li class="@ColorClass(p.Color) @(p.Id == State.CurrentPlayerId ? "current-turn" : "")">
                         @p.Name — @p.SequenceCount / @State.SequencesToWin sequences
-                        @if (p.Id == MyPlayerId) { <span> (you)</span> }
                     </li>
                 }
             </ul>
             <div>Cards left in deck: @State.DeckCount</div>
         </header>
 
-        @if (!string.IsNullOrEmpty(Client.LastError))
-        {
-            <p class="error">@Client.LastError</p>
-        }
-
         @if (State.Status == GameStatus.WaitingForPlayers)
         {
             <div class="waiting-panel">
-                <p>Waiting for players. Share the room code <strong>@State.RoomCode</strong> with others.</p>
-                @if (State.Players.Count >= 2)
-                {
-                    <button class="btn-primary" @onclick="StartGame">Start Game</button>
-                }
-                else
-                {
-                    <p>Need at least 2 players to start.</p>
-                }
+                <p>Waiting for players. Share the room code:</p>
+                <p class="room-code-big">@State.RoomCode</p>
             </div>
         }
         else if (State.Status == GameStatus.Completed)
@@ -59,23 +45,13 @@ else
         }
         else
         {
-            <p class="status-line">
-                @if (State.CurrentPlayerId == MyPlayerId)
-                {
-                    <span>Your turn — @(selectedCard is null ? "select a card to play" : $"select a board space for {DescribeCard(selectedCard.Value)}")</span>
-                }
-                else
-                {
-                    <span>Waiting for @CurrentPlayerName()…</span>
-                }
-            </p>
+            <p class="status-line">@CurrentPlayerName()'s turn</p>
         }
 
         <div class="board" style="grid-template-columns: repeat(10, 1fr);">
             @foreach (var cell in State.Board.OrderBy(c => c.Row).ThenBy(c => c.Col))
             {
-                <div class="cell @(cell.IsFree ? "free" : "") @(cell.PartOfCompletedSequence ? "in-sequence" : "") @(CanTargetCell(cell) ? "targetable" : "")"
-                     @onclick="() => OnCellClicked(cell)">
+                <div class="cell @(cell.IsFree ? "free" : "") @(cell.PartOfCompletedSequence ? "in-sequence" : "")">
                     @if (cell.IsFree)
                     {
                         <span class="free-label">★</span>
@@ -88,82 +64,37 @@ else
                     {
                         <div class="chip @ColorClass(ColorOf(cell.ChipOwnerId.Value))"></div>
                     }
+                    @if (LabelFor(cell) is { } label)
+                    {
+                        <div class="cell-badge">@label</div>
+                    }
                 </div>
             }
         </div>
-
-        @if (State.Status == GameStatus.InProgress)
-        {
-            <div class="hand">
-                @foreach (var card in State.YourHand)
-                {
-                    <button class="card @SuitClass(card.Suit) @(IsSelected(card) ? "selected" : "")"
-                            disabled="@(State.CurrentPlayerId != MyPlayerId)"
-                            @onclick="() => SelectCard(card)">
-                        @DescribeCard(card)
-                    </button>
-                }
-            </div>
-        }
     </div>
 }
 
 @code {
     [Parameter] public string RoomCode { get; set; } = "";
 
-    private Card? selectedCard;
-
     private GameStateSnapshot? State => Client.State;
-    private Guid? MyPlayerId => Client.PlayerId;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Client.OnChange += HandleChange;
-
-        // Client.PlayerId is set synchronously as soon as CreateRoomAsync/JoinRoomAsync succeeds,
-        // before the first StateUpdated snapshot has necessarily rendered. Only treat this as "no
-        // active session" (e.g. a hard page refresh, since WASM state is in-memory only) when we
-        // never joined a room at all — don't bounce back to "/" just because State hasn't arrived yet.
-        if (Client.PlayerId is null)
-        {
-            Nav.NavigateTo("/");
-        }
+        await Client.WatchRoomAsync(RoomCode);
     }
 
     private void HandleChange() => InvokeAsync(StateHasChanged);
 
-    private async Task StartGame() => await Client.StartGameAsync(RoomCode);
-
-    private void SelectCard(Card card)
+    private string? LabelFor(CellSnapshot cell)
     {
-        selectedCard = IsSelected(card) ? null : card;
-    }
+        var selection = Client.LatestSelection;
+        if (selection is null || State is null) return null;
+        if (selection.PlayerId != State.CurrentPlayerId) return null;
 
-    private bool IsSelected(Card card) => selectedCard is not null && selectedCard.Value == card;
-
-    private async Task OnCellClicked(CellSnapshot cell)
-    {
-        if (selectedCard is null || cell.IsFree || State is null) return;
-        if (State.CurrentPlayerId != MyPlayerId) return;
-
-        var moveType = selectedCard.Value.IsOneEyedJack ? MoveType.RemoveChip : MoveType.PlaceChip;
-        var move = new MoveRequest(selectedCard.Value, cell.Row, cell.Col, moveType);
-        selectedCard = null;
-        await Client.PlayMoveAsync(RoomCode, move);
-    }
-
-    private bool CanTargetCell(CellSnapshot cell)
-    {
-        if (selectedCard is null || cell.IsFree || State is null) return false;
-        if (State.CurrentPlayerId != MyPlayerId) return false;
-
-        if (selectedCard.Value.IsOneEyedJack)
-            return cell.ChipOwnerId is not null && cell.ChipOwnerId != MyPlayerId && !cell.PartOfCompletedSequence;
-
-        if (selectedCard.Value.IsTwoEyedJack)
-            return cell.ChipOwnerId is null;
-
-        return cell.ChipOwnerId is null && cell.Card == selectedCard.Value;
+        return selection.Targets
+            .FirstOrDefault(t => t.Row == cell.Row && t.Col == cell.Col)?.Label;
     }
 
     private PlayerColor ColorOf(Guid playerId) =>

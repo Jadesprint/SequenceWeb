@@ -35,6 +35,11 @@ public sealed class GameClient : IAsyncDisposable
             LastError = null;
             OnChange?.Invoke();
         });
+        _connection.On<GameStateSnapshot>("DisplayStateUpdated", snapshot =>
+        {
+            State = snapshot;
+            OnChange?.Invoke();
+        });
 
         _connection.On<string>("Error", message =>
         {
@@ -73,6 +78,12 @@ public sealed class GameClient : IAsyncDisposable
     {
         await EnsureConnectedAsync();
         await _connection!.InvokeAsync("StartGame", roomCode);
+    }
+
+    public async Task WatchRoomAsync(string roomCode)
+    {
+        await EnsureConnectedAsync();
+        await _connection!.InvokeAsync("WatchRoom", roomCode);
     }
 
     public async Task PlayMoveAsync(string roomCode, MoveRequest move)

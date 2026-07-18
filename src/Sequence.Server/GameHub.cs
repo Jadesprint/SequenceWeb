@@ -53,6 +53,16 @@ public sealed class GameHub : Hub
         return new RoomJoinResult(true, null, state.RoomCode, player.Id);
     }
 
+    public async Task WatchRoom(string roomCode)
+    {
+        if (!_rooms.TryGetRoom(roomCode, out var state)) return;
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, state.RoomCode);
+
+        var snapshot = GameStateSnapshotFactory.Build(state, Guid.Empty);
+        await Clients.Caller.SendAsync("DisplayStateUpdated", snapshot);
+    }
+
     public async Task StartGame(string roomCode)
     {
         if (!_rooms.TryGetRoom(roomCode, out var state)) return;
@@ -135,5 +145,8 @@ public sealed class GameHub : Hub
             if (connectionId is not null)
                 await Clients.Client(connectionId).SendAsync("StateUpdated", snapshot);
         }
+
+        var displaySnapshot = GameStateSnapshotFactory.Build(state, Guid.Empty);
+        await Clients.Group(state.RoomCode).SendAsync("DisplayStateUpdated", displaySnapshot);
     }
 }

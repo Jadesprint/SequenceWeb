@@ -277,3 +277,47 @@ code {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.targets {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.target-btn {
+    font-size: 2rem;
+    font-weight: 700;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    border: 2px solid #2980b9;
+    background: #eaf4fc;
+    cursor: pointer;
+}
+
+.target-btn{
+    background: #2980b9;
+    color: white;
+}
+
+.room-code-big {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-align: center;
+}
+
+.cell-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: gold;
+    color: #222;
+    font-weight: 700;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    padding: 1px 4px;
+    z-index: 2;
+}
