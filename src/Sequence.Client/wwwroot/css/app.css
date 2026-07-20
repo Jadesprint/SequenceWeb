@@ -321,3 +321,13 @@ code {
     padding: 1px 4px;
     z-index: 2;
 }
+
+.qr-code {
+    display: block;
+    margin: 1rem auto;
+    width: 220px;
+    height: 220px;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+}

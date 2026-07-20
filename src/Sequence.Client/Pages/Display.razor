@@ -3,7 +3,9 @@
 @using Sequence.Core.Contracts
 @using Sequence.Core.Game
 @using Sequence.Client.Services
+@using QRCoder
 @inject GameClient Client
+@inject NavigationManager Nav
 @implements IDisposable
 
 <PageTitle>Sequence — @RoomCode</PageTitle>
@@ -33,8 +35,12 @@ else
         @if (State.Status == GameStatus.WaitingForPlayers)
         {
             <div class="waiting-panel">
-                <p>Waiting for players. Share the room code:</p>
+                <p>Waiting for players. Scan to join, or share the room code:</p>
                 <p class="room-code-big">@State.RoomCode</p>
+                @if (qrCodeDataUri is not null)
+                {
+                    <img class="qr-code" src="@qrCodeDataUri" alt="QR code to join the game" />
+                }
             </div>
         }
         else if (State.Status == GameStatus.Completed)
@@ -78,13 +84,22 @@ else
     [Parameter] public string RoomCode { get; set; } = "";
 
     private GameStateSnapshot? State => Client.State;
+    private string? qrCodeDataUri;
 
     protected override async Task OnInitializedAsync()
     {
         Client.OnChange += HandleChange;
+        qrCodeDataUri = BuildQrCodeDataUri($"{Nav.BaseUri}play/{RoomCode}");
         await Client.WatchRoomAsync(RoomCode);
     }
-
+    private static string BuildQrCodeDataUri(string url)
+    {
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+        var png = new PngByteQRCode(data);
+        var bytes = png.GetGraphic(10);
+        return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+    }
     private void HandleChange() => InvokeAsync(StateHasChanged);
 
     private string? LabelFor(CellSnapshot cell)
