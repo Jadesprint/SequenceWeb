@@ -25,10 +25,11 @@ public sealed class GameHub : Hub
     public async Task<RoomJoinResult> JoinRoom(string roomCode, string playerName)
     {
         if (!_rooms.TryGetRoom(roomCode, out var state))
-            return new RoomJoinResult(false, "Room not found.", null, null);
+            return new RoomJoinResult(false, "Room not found.", null, null, null);
 
         return await JoinRoomCore(state, playerName);
     }
+
 
     private async Task<RoomJoinResult> JoinRoomCore(GameState state, string playerName)
     {
@@ -40,6 +41,14 @@ public sealed class GameHub : Hub
 
         if (string.IsNullOrWhiteSpace(playerName))
             return new RoomJoinResult(false, "Name is required.", null, null);
+        if (state.Status != GameStatus.WaitingForPlayers)
+            return new RoomJoinResult(false, "Game has already started.", null, null, null);
+
+        if (state.Players.Count >= MaxPlayers)
+            return new RoomJoinResult(false, "Room is full.", null, null, null);
+
+        if (string.IsNullOrWhiteSpace(playerName))
+            return new RoomJoinResult(false, "Name is required.", null, null, null);
 
         var color = (PlayerColor)state.Players.Count;
         var player = new Player { Id = Guid.NewGuid(), Name = playerName.Trim(), Color = color };
@@ -48,10 +57,33 @@ public sealed class GameHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, state.RoomCode);
         _rooms.TrackConnection(Context.ConnectionId, state.RoomCode, player.Id);
 
+        var rejoinToken = _rooms.CreateRejoinToken(state.RoomCode, player.Id);
+
         await BroadcastState(state);
 
-        return new RoomJoinResult(true, null, state.RoomCode, player.Id);
+        return new RoomJoinResult(true, null, state.RoomCode, player.Id, rejoinToken);
+
     }
+        public async Task<RoomJoinResult> RejoinRoom(string roomCode, string rejoinToken)
+    {
+        if (!_rooms.TryGetRoom(roomCode, out var state))
+            return new RoomJoinResult(false, "Room not found.", null, null, null);
+
+        if (!_rooms.TryResolveRejoinToken(roomCode, rejoinToken, out var playerId))
+            return new RoomJoinResult(false, "Rejoin token not recognized.", null, null, null);
+
+        var player = state.GetPlayer(playerId);
+        if (player is null)
+            return new RoomJoinResult(false, "Player no longer exists in this room.", null, null, null);
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, state.RoomCode);
+        _rooms.TrackConnection(Context.ConnectionId, state.RoomCode, player.Id);
+
+        await BroadcastState(state);
+
+        return new RoomJoinResult(true, null, state.RoomCode, player.Id, rejoinToken);
+    }
+
 
     public async Task WatchRoom(string roomCode)
     {

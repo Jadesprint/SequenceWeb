@@ -55,4 +55,17 @@ public sealed class RoomManager
             buffer[i] = CodeAlphabet[_random.Next(CodeAlphabet.Length)];
         return new string(buffer);
     }
+    private readonly ConcurrentDictionary<(string RoomCode, string Token), Guid> _rejoinTokens = new();
+
+    public string CreateRejoinToken(string roomCode, Guid playerId)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        _rejoinTokens[(roomCode.ToUpperInvariant(), token)] = playerId;
+        return token;
+    }
+
+    public bool TryResolveRejoinToken(string roomCode, string token, out Guid playerId) =>
+        _rejoinTokens.TryGetValue((roomCode.ToUpperInvariant(), token), out playerId);
+
+    
 }

@@ -26,4 +26,4 @@ public sealed record GameStateSnapshot(
 
 public sealed record MoveRequest(Card Card, int Row, int Col, MoveType Type);
 
-public sealed record RoomJoinResult(bool Success, string? Error, string? RoomCode, Guid? PlayerId);
+public sealed record RoomJoinResult(bool Success, string? Error, string? RoomCode, Guid? PlayerId, string? RejoinToken);

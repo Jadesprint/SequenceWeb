@@ -66,14 +66,43 @@ else
             <div class="hand">
                 @foreach (var card in State.YourHand)
                 {
-                    <button class="card @SuitClass(card.Suit)"
-                            disabled="@card.IsJack"
-                            title="@(card.IsJack ? "Jacks aren't supported yet" : "")"
-                            @onclick="() => PickCard(card)">
+                    <button class="card @SuitClass(card.Suit)" @onclick="() => PickCard(card)">
                         @DescribeCard(card)
                     </button>
+
                 }
             </div>
+        }
+        else if (pendingCard.Value.IsJack){
+            <p class="status-line">
+                Playing @DescribeCard(pendingCard.Value) —
+                @(pendingCard.Value.IsOneEyedJack ? "remove an opponent's chip" : "place anywhere open") —
+                @(pickedColumn is null ? "pick a column" : "pick a row")
+            </p>
+
+            @if (pickedColumn is null)
+            {
+                <div class="targets">
+                    @for (var col = 0; col < 10; col++)
+                    {
+                        var c = col;
+                        <button class="target-btn" @onclick="() => PickColumn(c)">@ColumnLetter(c)</button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="targets">
+                    @for (var row = 0; row < 10; row++)
+                    {
+                        var r = row;
+                        <button class="target-btn" @onclick="() => PickRow(r)">@(r + 1)</button>
+                    }
+                </div>
+                <button @onclick="() => pickedColumn = null">Back</button>
+            }
+            
+            <button @onclick="CancelSelection">Cancel</button>
         }
         else if (MySelection is null)
         {
@@ -102,6 +131,7 @@ else
     [Parameter] public string RoomCode { get; set; } = "";
 
     private Card? pendingCard;
+    private int? pickedColumn;
 
     private GameStateSnapshot? State => Client.State;
     private Guid? MyPlayerId => Client.PlayerId;
@@ -114,15 +144,20 @@ else
             ? sel
             : null;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Client.OnChange += HandleChange;
 
         if (Client.PlayerId is null)
         {
-            Nav.NavigateTo("/");
+            var rejoined = await Client.TryRejoinAsync(RoomCode);
+            if (!rejoined)
+            {
+                Nav.NavigateTo("/");
+            }
         }
     }
+
 
     private void HandleChange() => InvokeAsync(StateHasChanged);
 
@@ -131,12 +166,16 @@ else
     private async Task PickCard(Card card)
     {
         pendingCard = card;
-        await Client.SelectcardAsync(RoomCode, card);
+        pickedColumn = null;
+
+        if (!card.IsJack)
+            await Client.SelectcardAsync(RoomCode, card);
     }
 
     private void CancelSelection()
     {
         pendingCard = null;
+        pickedColumn = null;
     }
 
     private async Task PlayTarget(LabeledTarget target)
@@ -145,6 +184,20 @@ else
 
         var move = new MoveRequest(pendingCard.Value, target.Row, target.Col, MoveType.PlaceChip);
         pendingCard = null;
+        await Client.PlayMoveAsync(RoomCode, move);
+    }
+
+    private void PickColumn(int col) => pickedColumn = col;
+
+    private async Task PickRow(int row)
+    {
+        if (pendingCard is null || pickedColumn is null) return;
+
+        var moveType = pendingCard.Value.IsOneEyedJack ? MoveType.RemoveChip : MoveType.PlaceChip;
+        var move = new MoveRequest(pendingCard.Value, row, pickedColumn.Value, moveType);
+
+        pendingCard = null;
+        pickedColumn = null;
         await Client.PlayMoveAsync(RoomCode, move);
     }
 
@@ -161,6 +214,8 @@ else
         PlayerColor.Red => "color-red",
         _ => ""
     };
+
+    private static string ColumnLetter(int col) => ((char)('A' + col)).ToString();
 
     private static string SuitClass(Suit suit) =>
         suit is Suit.Hearts or Suit.Diamonds ? "suit-red" : "suit-black";
