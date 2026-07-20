@@ -74,7 +74,11 @@ public sealed class GameClient : IAsyncDisposable
     {
         await EnsureConnectedAsync();
         var result = await _connection!.InvokeAsync<RoomJoinResult>("CreateAndJoinRoom", playerName);
-        if (result.Success) PlayerId = result.PlayerId;
+        if (result.Success)
+        {
+            PlayerId = result.PlayerId;
+            await SaveSessionAsync(result.RoomCode!, result.PlayerId!.Value, result.RejoinToken!);
+        }
         return result;
     }
 
@@ -82,7 +86,11 @@ public sealed class GameClient : IAsyncDisposable
     {
         await EnsureConnectedAsync();
         var result = await _connection!.InvokeAsync<RoomJoinResult>("JoinRoom", roomCode, playerName);
-        if (result.Success) PlayerId = result.PlayerId;
+        if (result.Success)
+        {
+            PlayerId = result.PlayerId;
+            await SaveSessionAsync(result.RoomCode!, result.PlayerId!.Value, result.RejoinToken!);
+        }
         return result;
     }
 

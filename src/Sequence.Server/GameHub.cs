@@ -34,14 +34,6 @@ public sealed class GameHub : Hub
     private async Task<RoomJoinResult> JoinRoomCore(GameState state, string playerName)
     {
         if (state.Status != GameStatus.WaitingForPlayers)
-            return new RoomJoinResult(false, "Game has already started.", null, null);
-
-        if (state.Players.Count >= MaxPlayers)
-            return new RoomJoinResult(false, "Room is full.", null, null);
-
-        if (string.IsNullOrWhiteSpace(playerName))
-            return new RoomJoinResult(false, "Name is required.", null, null);
-        if (state.Status != GameStatus.WaitingForPlayers)
             return new RoomJoinResult(false, "Game has already started.", null, null, null);
 
         if (state.Players.Count >= MaxPlayers)
