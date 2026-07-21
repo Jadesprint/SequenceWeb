@@ -162,15 +162,23 @@ public sealed class GameHub : Hub
 
     private async Task BroadcastState(GameState state)
     {
+        var playerConnectionIds = new List<string>();
+
         foreach (var player in state.Players)
         {
             var snapshot = GameStateSnapshotFactory.Build(state, player.Id);
             var connectionId = _rooms.TryGetConnectionId(state.RoomCode, player.Id);
             if (connectionId is not null)
+            {
+                playerConnectionIds.Add(connectionId);
                 await Clients.Client(connectionId).SendAsync("StateUpdated", snapshot);
+            }
         }
 
+        // Exclude players from the group broadcast -- they already got their own personalized
+        // snapshot above. Without this, every player's own connection (also a group member)
+        // would receive this empty-handed spectator snapshot right after and overwrite it.
         var displaySnapshot = GameStateSnapshotFactory.Build(state, Guid.Empty);
-        await Clients.Group(state.RoomCode).SendAsync("DisplayStateUpdated", displaySnapshot);
+        await Clients.GroupExcept(state.RoomCode, playerConnectionIds).SendAsync("DisplayStateUpdated", displaySnapshot);
     }
 }
