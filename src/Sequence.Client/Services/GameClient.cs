@@ -2,6 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.SignalR.Client;
 using Sequence.Core.Cards;
 using Sequence.Core.Contracts;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using System.Text.Json;
 
@@ -10,15 +11,15 @@ namespace Sequence.Client.Services;
 public sealed class GameClient : IAsyncDisposable
 {
     private readonly IJSRuntime _js;
-    // TODO: move to configuration before deploying anywhere but localhost.
-    private const string HubUrl = "http://localhost:5187/hubs/game";
+    private readonly string _hubUrl;
     private const string SessionStorageKey = "sequence.session";
 
     private HubConnection? _connection;
 
-    public GameClient(IJSRuntime js)
+    public GameClient(IJSRuntime js, IConfiguration configuration)
     {
         _js = js;
+        _hubUrl = configuration["HubUrl"] ?? "http://localhost:5187/hubs/game";
     }
 
     private sealed record SavedSession(string RoomCode, Guid PlayerId, string RejoinToken);
@@ -36,7 +37,7 @@ public sealed class GameClient : IAsyncDisposable
         if (_connection is not null) return;
 
         _connection = new HubConnectionBuilder()
-            .WithUrl(HubUrl)
+            .WithUrl(_hubUrl)
             .WithAutomaticReconnect()
             .Build();
 
