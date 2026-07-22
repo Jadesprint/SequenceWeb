@@ -26,6 +26,9 @@ public static class MoveValidator
             error = "You do not hold that card.";
             return false;
         }
+        
+        if(move.Type == MoveType.DiscardDeadCard)
+            return ValidateDiscard(state, move, player, out error);
 
         if (move.Row < 0 || move.Row >= state.Board.Size || move.Col < 0 || move.Col >= state.Board.Size)
         {
@@ -87,6 +90,19 @@ public static class MoveValidator
         if (cell.PartOfCompletedSequence)
         {
             error = "Chip is part of a completed sequence and cannot be removed.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateDiscard(GameState state, Move move, Player player, out string error)
+    {
+        error = string.Empty;
+
+        if (MoveCandidateFinder.FindTargets(state, player.Id, move.Card).Count > 0)
+        {
+            error = "That card still has a legal move; cannot be discarded as dead.";
             return false;
         }
 

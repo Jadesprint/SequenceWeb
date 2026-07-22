@@ -89,7 +89,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         Client.OnChange += HandleChange;
-        qrCodeDataUri = BuildQrCodeDataUri($"{Nav.BaseUri}play/{RoomCode}");
+        qrCodeDataUri = BuildQrCodeDataUri($"{Nav.BaseUri}join/{RoomCode}");
         await Client.WatchRoomAsync(RoomCode);
     }
     private static string BuildQrCodeDataUri(string url)

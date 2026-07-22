@@ -23,7 +23,21 @@ public static class GameEngine
             throw new InvalidOperationException(error);
 
         var player = state.GetPlayer(move.PlayerId)!;
+
+        if (move.Type == MoveType.DiscardDeadCard)
+        {
+            player.Hand.Remove(move.Card);
+            state.DiscardPile.Add(move.Card);
+
+            if (state.Deck.Count > 0)
+                player.Hand.Add(state.Deck.Draw());
+
+            state.AdvanceTurn();
+            return;
+        }
+
         var cell = state.Board.GetCell(move.Row, move.Col);
+
 
         if (move.Type == MoveType.RemoveChip)
         {

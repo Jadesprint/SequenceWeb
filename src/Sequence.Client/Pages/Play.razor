@@ -110,9 +110,11 @@ else
         }
         else if (MySelection.Targets.Count == 0)
         {
-            <p class="status-line">No open spaces for @DescribeCard(pendingCard.Value) — pick another card.</p>
+            <p class="status-line">No open spaces for @DescribeCard(pendingCard.Value) — this card is dead.</p>
+            <button class="btn-primary" @onclick="DiscardCard">Discard & draw a new card</button>
             <button @onclick="CancelSelection">Back</button>
         }
+
         else
         {
             <p class="status-line">Playing @DescribeCard(pendingCard.Value) — choose a space:</p>
@@ -183,6 +185,15 @@ else
         if (pendingCard is null) return;
 
         var move = new MoveRequest(pendingCard.Value, target.Row, target.Col, MoveType.PlaceChip);
+        pendingCard = null;
+        await Client.PlayMoveAsync(RoomCode, move);
+    }
+
+        private async Task DiscardCard()
+    {
+        if (pendingCard is null) return;
+
+        var move = new MoveRequest(pendingCard.Value, -1, -1, MoveType.DiscardDeadCard);
         pendingCard = null;
         await Client.PlayMoveAsync(RoomCode, move);
     }

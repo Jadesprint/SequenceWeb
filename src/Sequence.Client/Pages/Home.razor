@@ -1,4 +1,5 @@
 @page "/"
+@page "/join/{PresetRoomCode}"
 @using Sequence.Client.Services
 @inject GameClient Client
 @inject NavigationManager Nav
@@ -33,6 +34,7 @@
 </div>
 
 @code {
+    [Parameter] public string? PresetRoomCode {get; set;}
     private string playerName = "";
     private string roomCode = "";
     private string? error;
@@ -82,5 +84,11 @@
         {
             busy = false;
         }
+    }
+
+    protected override void OnInitialized()
+    {
+        if(!string.IsNullOrWhiteSpace(PresetRoomCode))
+            roomCode = PresetRoomCode;
     }
 }
