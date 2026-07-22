@@ -54,27 +54,37 @@ else
             <p class="status-line">@CurrentPlayerName()'s turn</p>
         }
 
-        <div class="board" style="grid-template-columns: repeat(10, 1fr);">
-            @foreach (var cell in State.Board.OrderBy(c => c.Row).ThenBy(c => c.Col))
+        <div class="board" style="grid-template-columns: auto repeat(10, 1fr);">
+            <div class="grid-label corner"></div>
+            @for (var col = 0; col < 10; col++)
             {
-                <div class="cell @(cell.IsFree ? "free" : "") @(cell.PartOfCompletedSequence ? "in-sequence" : "")">
-                    @if (cell.IsFree)
-                    {
-                        <span class="free-label">★</span>
-                    }
-                    else if (cell.Card is not null)
-                    {
-                        <span class="@SuitClass(cell.Card.Value.Suit)">@DescribeCard(cell.Card.Value)</span>
-                    }
-                    @if (cell.ChipOwnerId is not null)
-                    {
-                        <div class="chip @ColorClass(ColorOf(cell.ChipOwnerId.Value))"></div>
-                    }
-                    @if (LabelFor(cell) is { } label)
-                    {
-                        <div class="cell-badge">@label</div>
-                    }
-                </div>
+                <div class="grid-label">@ColumnLetter(col)</div>
+            }
+
+            @for (var row = 0; row < 10; row++)
+            {
+                <div class="grid-label">@(row + 1)</div>
+                @foreach (var cell in State.Board.Where(c => c.Row == row).OrderBy(c => c.Col))
+                {
+                    <div class="cell @(cell.IsFree ? "free" : "") @(cell.PartOfCompletedSequence ? "in-sequence" : "")">
+                        @if (cell.IsFree)
+                        {
+                            <span class="free-label">★</span>
+                        }
+                        else if (cell.Card is not null)
+                        {
+                            <span class="@SuitClass(cell.Card.Value.Suit)">@DescribeCard(cell.Card.Value)</span>
+                        }
+                        @if (cell.ChipOwnerId is not null)
+                        {
+                            <div class="chip @ColorClass(ColorOf(cell.ChipOwnerId.Value))"></div>
+                        }
+                        @if (LabelFor(cell) is { } label)
+                        {
+                            <div class="cell-badge">@label</div>
+                        }
+                    </div>
+                }
             }
         </div>
     </div>
@@ -161,6 +171,7 @@ else
         };
         return $"{rank}{suit}";
     }
+    private static string ColumnLetter(int col) => ((char)('A' + col)).ToString();
 
     public void Dispose() => Client.OnChange -= HandleChange;
 }

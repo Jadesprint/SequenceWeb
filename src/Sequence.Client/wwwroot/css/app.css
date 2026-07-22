@@ -245,6 +245,19 @@ code {
     opacity: 0.85;
 }
 
+.grid-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ccc;
+}
+
+.grid-label.corner {
+    background: transparent;
+}
+
 .suit-red { color: #c0392b; }
 .suit-black { color: #1a1a1a; }
 
