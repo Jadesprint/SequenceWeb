@@ -35,23 +35,23 @@ dotnet run --project src/Sequence.Server/Sequence.Server.csproj --launch-profile
 dotnet run --project src/Sequence.Client/Sequence.Client.csproj --launch-profile http --urls http://localhost:5216
 ```
 
-**3. Local deploy** (Port forwarding using any method of your liking)
-After compiling and running (assuming you use VSCode to do so) you can also forward your port using dev tunnels.
-Remember to change port privacy to public on both ports server and client.
-After that you can copy the url and share it to anyone. Keep in mind all security risks regarding port forwarding with public privacy.
-You can then create a room and navigate to `YOUR_DEV_TUNNEL_URL/display/YOUR_ROOM_CODE` in another tab or device to access the game board where a QR Code will generate for others to join.
-Then done, you can play!
+**3. Local deploy** (Port forwarding using any method of your liking)  
+After compiling and running (assuming you use VSCode to do so) you can also forward your port using dev tunnels.  
+Remember to change port privacy to public on both ports server and client.  
+After that you can copy the url and share it to anyone. Keep in mind all security risks regarding port forwarding with public privacy.  
+You can then create a room and navigate to `YOUR_DEV_TUNNEL_URL/display/YOUR_ROOM_CODE` in another tab or device to access the game board where a QR Code will generate for others to join.  
+Then done, you can play!  
 
 
-> The game hub URL configuration can be edited at `Sequence.Server/Properties/appsettings.Development.json` and `Sequence.Client/wwwroot/appsettings.json`. Here you can paste the urls from the port forwarding integration at VSCode Console
+> The game hub URL configuration can be edited at `Sequence.Server/Properties/appsettings.Development.json` and `Sequence.Client/wwwroot/appsettings.json`. Here you can paste the urls from the port forwarding integration at VSCode Console  
 
 **4. Gameplay loop and tips** 
--No need to setup anything else, game rules such as teams, cards for players and sequences needed to win are automatically configured based on player count
--You can play this from your phone using your pc or any other device with web browser as display for the game board (Kahoot style!)
--Select a card to play and then choose A or B positions (highlighted on board)
--When selecting a Joker you will be prompted a different set of options, this time Battleship style. Choose column and row to confirm selection.
--When playing a dead card the game will let you know and follow the official set of rules for Sequence
--Currently looking forward to add the overlaping chip rule. Keep in mind this is not a thing when playing WebSequence!
+- No need to setup anything else, game rules such as teams, cards for players and sequences needed to win are automatically configured based on player count
+- You can play this from your phone using your pc or any other device with web browser as display for the game board (Kahoot style!)
+- Select a card to play and then choose A or B positions (highlighted on board)
+- When selecting a Joker you will be prompted a different set of options, this time Battleship style. Choose column and row to confirm selection.
+- When playing a dead card the game will let you know and follow the official set of rules for Sequence
+- Currently looking forward to add the overlaping chip rule. Keep in mind this is not a thing when playing WebSequence!
 
 ## Running tests
 
