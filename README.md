@@ -75,6 +75,7 @@ The board's card layout is generated deterministically in code (`BoardLayout.cs`
 
 - Not yet deployed anywhere (see stack notes below for the intended path).
 - No animations/polish on the board UI yet.
+- Sequence has a punishment rule for not drawing a card within your turn, looking forward to add this as a mechanic.
 
 ## Deployment plan
 
