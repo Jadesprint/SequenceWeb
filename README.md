@@ -67,15 +67,20 @@ dotnet test
 - Sequence detection across all 4 directions (horizontal, vertical, both diagonals), with the four free corners acting as wild for every player.
 - Win condition: 2 sequences to win in a 2-player game (standard Sequence rules).
 
-**Known simplification:** the official rules allow a single chip to be shared between two different completed sequences. This implementation currently does not allow that overlap — each chip counts toward at most one sequence. Worth revisiting if it matters for your games.
+**Known simplification:**   
+the official rules allow a single chip to be shared between two different completed sequences.    
+This implementation currently does not allow that overlap — each chip counts toward at most one sequence.  
 
-The board's card layout is generated deterministically in code (`BoardLayout.cs`) rather than transcribed from the physical retail board — every non-jack card still appears exactly twice among the 96 non-corner cells, and the arrangement is identical for every game, but the specific card-to-cell positions differ cosmetically from the physical board.
+The board's card layout is generated deterministically in code (`BoardLayout.cs`) — every non-jack card still appears exactly twice among the 96 non-corner cells, and the arrangement is identical for every game, tho it differs cosmetically from the physical board.  
+
+Also, there is no drawing within your turn rule and punishment.  
+Check Status/Roadmap for more details.  
 
 ## Status / not yet done
 
 - Not yet deployed anywhere (see stack notes below for the intended path).
 - No animations/polish on the board UI yet.
-- Sequence has a punishment rule for not drawing a card within your turn, looking forward to add this as a mechanic.
+- Sequence has a punishment rule for not drawing a card within your turn, looking forward to add this as a mechanic but it would require quite the effort.  
 
 ## Deployment plan
 
