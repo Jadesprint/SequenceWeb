@@ -228,12 +228,22 @@ else
 
     private static string ColumnLetter(int col) => ((char)('A' + col)).ToString();
 
-    private static string SuitClass(Suit suit) =>
-        suit is Suit.Hearts or Suit.Diamonds ? "suit-red" : "suit-black";
+    private static string SuitClass(Suit suit)
+    {
+        string? suitClass = suit switch
+        {
+            Suit.Clubs => "suit-blue",
+            Suit.Diamonds => "suit-orange",
+            Suit.Hearts => "suit-red",
+            Suit.Spades => "suit-black",
+            _ => "?"
+        };
+        return suitClass;
+    }
 
     private static string DescribeCard(Card card)
     {
-        var rank = card.Rank switch
+        string? rank = card.Rank switch
         {
             Rank.Two => "2",
             Rank.Three => "3",
@@ -250,7 +260,7 @@ else
             Rank.Ace => "A",
             _ => "?"
         };
-        var suit = card.Suit switch
+        string? suit = card.Suit switch
         {
             Suit.Clubs => "♣",
             Suit.Diamonds => "♦",

@@ -139,9 +139,17 @@ else
         _ => ""
     };
 
-    private static string SuitClass(Suit suit) =>
-        suit is Suit.Hearts or Suit.Diamonds ? "suit-red" : "suit-black";
-
+    private static string SuitClass(Suit suit)
+    {
+        string? suitCssClass = suit switch{
+            Suit.Clubs => "suit-blue",
+            Suit.Diamonds => "suit-orange",
+            Suit.Hearts => "suit-red",
+            Suit.Spades => "suit-black",
+            _ => "?"
+        };
+        return suitCssClass;
+}
     private static string DescribeCard(Card card)
     {
         var rank = card.Rank switch
