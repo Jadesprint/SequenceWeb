@@ -86,3 +86,6 @@ Check Status/Roadmap for more details.
 
 - **Client** (static Blazor WASM output): Vercel, Netlify, or Cloudflare Pages.
 - **Server** (stateful SignalR host, needs persistent WebSocket connections): Fly.io or Railway 
+
+## Special thanks  
+Thanks to @selfthinker for the CSS-Playing-Cards repo, very much inspiring to build my own css file

@@ -1,0 +1,28 @@
+@using Sequence.Core.Cards
+@using Sequence.Client
+
+<div class="card-info-top-left card-corner">
+    <span class="corner-rank">@CardVisuals.RankText(Card)</span>
+    <span class="corner-suit">@CardVisuals.SuitGlyph(Card.Suit)</span>
+</div>
+<div class="card-info-bottom-right card-corner">
+    <span class="corner-rank">@CardVisuals.RankText(Card)</span>
+    <span class="corner-suit">@CardVisuals.SuitGlyph(Card.Suit)</span>
+</div>
+@if (CardVisuals.PipPositions(Card.Rank) is { Length: > 0 } pips)
+{
+    <div class="card-pips @(pips.Length >= 7 ? "dense" : "")">
+        @foreach (var pos in pips)
+        {
+            <span class="pip pip-@pos @(CardVisuals.IsBottomHalf(pos) ? "pip-rotate" : "")">@CardVisuals.SuitGlyph(Card.Suit)</span>
+        }
+    </div>
+}
+else
+{
+    <div class="card-face-glyph">@CardVisuals.SuitGlyph(Card.Suit)</div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Card Card { get; set; }
+}

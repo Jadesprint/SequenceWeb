@@ -16,7 +16,7 @@
 }
 else
 {
-    <div class="game-shell">
+    <div class="game-shell tv-view">
         <header class="game-header">
             <div>
                 <strong>Room:</strong> @State.RoomCode
@@ -54,7 +54,7 @@ else
             <p class="status-line">@CurrentPlayerName()'s turn</p>
         }
 
-        <div class="board" style="grid-template-columns: auto repeat(10, 1fr);">
+        <div class="board" style="grid-template-columns: auto repeat(10, 1fr); grid-template-rows: auto repeat(10, 1fr);">
             <div class="grid-label corner"></div>
             @for (var col = 0; col < 10; col++)
             {
@@ -66,14 +66,14 @@ else
                 <div class="grid-label">@(row + 1)</div>
                 @foreach (var cell in State.Board.Where(c => c.Row == row).OrderBy(c => c.Col))
                 {
-                    <div class="cell @(cell.IsFree ? "free" : "") @(cell.PartOfCompletedSequence ? "in-sequence" : "")">
+                    <div class="cell @(cell.IsFree ? "free" : "") @(cell.PartOfCompletedSequence ? "in-sequence" : "") @(cell.Card is not null ? CardVisuals.SuitClass(cell.Card.Value.Suit) : "")">
                         @if (cell.IsFree)
                         {
                             <span class="free-label">★</span>
                         }
                         else if (cell.Card is not null)
                         {
-                            <span class="@SuitClass(cell.Card.Value.Suit)">@DescribeCard(cell.Card.Value)</span>
+                            <PlayingCard Card="cell.Card.Value" />
                         }
                         @if (cell.ChipOwnerId is not null)
                         {
@@ -139,46 +139,6 @@ else
         _ => ""
     };
 
-    private static string SuitClass(Suit suit)
-    {
-        string? suitCssClass = suit switch{
-            Suit.Clubs => "suit-blue",
-            Suit.Diamonds => "suit-orange",
-            Suit.Hearts => "suit-red",
-            Suit.Spades => "suit-black",
-            _ => "?"
-        };
-        return suitCssClass;
-}
-    private static string DescribeCard(Card card)
-    {
-        var rank = card.Rank switch
-        {
-            Rank.Two => "2",
-            Rank.Three => "3",
-            Rank.Four => "4",
-            Rank.Five => "5",
-            Rank.Six => "6",
-            Rank.Seven => "7",
-            Rank.Eight => "8",
-            Rank.Nine => "9",
-            Rank.Ten => "10",
-            Rank.Jack => "J",
-            Rank.Queen => "Q",
-            Rank.King => "K",
-            Rank.Ace => "A",
-            _ => "?"
-        };
-        var suit = card.Suit switch
-        {
-            Suit.Clubs => "♣",
-            Suit.Diamonds => "♦",
-            Suit.Hearts => "♥",
-            Suit.Spades => "♠",
-            _ => "?"
-        };
-        return $"{rank}{suit}";
-    }
     private static string ColumnLetter(int col) => ((char)('A' + col)).ToString();
 
     public void Dispose() => Client.OnChange -= HandleChange;
