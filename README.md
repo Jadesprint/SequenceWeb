@@ -43,7 +43,7 @@ You can then create a room and navigate to `YOUR_DEV_TUNNEL_URL/display/YOUR_ROO
 Then done, you can play!  
 
 
-> The game hub URL configuration can be edited at `Sequence.Server/Properties/appsettings.Development.json` and `Sequence.Client/wwwroot/appsettings.json`. Here you can paste the urls from the port forwarding integration at VSCode Console  
+> The game hub URL configuration can be edited at `Sequence.Server/Properties/appsettings.Development.json` (for Client url pid 5216) and `Sequence.Client/wwwroot/appsettings.json` (for Server instance pid 5187). Here you can paste the urls from the port forwarding integration at VSCode Console  
 
 **4. Gameplay loop and tips** 
 - No need to setup anything else, game rules such as teams, cards for players and sequences needed to win are automatically configured based on player count
@@ -71,7 +71,7 @@ dotnet test
 the official rules allow a single chip to be shared between two different completed sequences.    
 This implementation currently does not allow that overlap — each chip counts toward at most one sequence.  
 
-The board's card layout is generated deterministically in code (`BoardLayout.cs`) — every non-jack card still appears exactly twice among the 96 non-corner cells, and the arrangement is identical for every game, tho it differs cosmetically from the physical board.  
+The board's card layout is generated deterministically in code (`BoardLayout.cs`) — every non-jack card still appears exactly twice among the 96 non-corner cells, and the arrangement is identical for every game, tho it differs cosmetically from the physical board. Feel free to remove the hardcoded seed to make it random.  
 
 Also, there is no drawing within your turn rule and punishment.  
 Check Status/Roadmap for more details.  
