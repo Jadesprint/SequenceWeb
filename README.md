@@ -1,6 +1,6 @@
 # Sequence
 
-A browser-based, online multiplayer version of the board game Sequence, built on .NET.
+A browser-based, phone compatible, online multiplayer version of the board game Sequence, built on .NET.
 
 ## Stack
 
